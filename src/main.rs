@@ -184,12 +184,13 @@ fn control(input: Res<ButtonInput<KeyCode>>, mut q_transform: Query<&mut Transfo
             }
             KeyCode::KeyB => {
                 *transform = Transform::from_translation(Vec3::new(
-                    11120.0,
-                    7200.0,
+                    13120.0,
+                    2020.0,
                     100.0,
                 ));
             }
             _ => (),
         }
     }
+    // dbg!(transform);
 }

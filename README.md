@@ -1,6 +1,5 @@
 
 wsad to move
 
-b to jump to problem
-
+b to jump to problem (sprites disappear)
 
