@@ -1,3 +1,4 @@
+use bevy::render::camera::ScalingMode;
 use bevy::window::{PresentMode, WindowMode, WindowResolution};
 use bevy::{
     prelude::*,
@@ -26,13 +27,16 @@ fn zoom_config(screen_width: u32, screen_height: u32) -> (Viewport, Orthographic
         OrthographicProjection {
             near: 0.0,
             far: 1500.0,
-            scale,
-            ..default()
+            scaling_mode: ScalingMode::Fixed {
+                width: screen_width as f32 * scale,
+                height: screen_height as f32 * scale,
+            },
+            ..OrthographicProjection::default_2d()
         },
     )
 }
 
-fn minimap_config(screen_width: u32, screen_height: u32) -> (Viewport, OrthographicProjection) {
+fn minimap_config(screen_width: u32, _screen_height: u32) -> (Viewport, OrthographicProjection) {
     let map_screen_size = (screen_width as f32 * MINIMAP_SCREEN_PERCENTAGE / 100.0) as u32;
     (
         Viewport {
@@ -43,8 +47,11 @@ fn minimap_config(screen_width: u32, screen_height: u32) -> (Viewport, Orthograp
         OrthographicProjection {
             near: 0.0,
             far: 1500.0,
-            scale: WORLD_SIZE as f32 / map_screen_size as f32,
-            ..default()
+            scaling_mode: ScalingMode::Fixed {
+                width: WORLD_SIZE as f32,
+                height: WORLD_SIZE as f32,
+            },
+            ..OrthographicProjection::default_2d()
         },
     )
 }
@@ -63,18 +70,15 @@ fn setup(
         window.resolution.physical_height(),
     );
     commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                is_active: true,
-                order: 1,
-                viewport: Some(viewport),
-                ..default()
-            },
-            transform: Transform::from_translation(Vec3::ZERO.with_z(100.0)),
-            projection,
-            camera_2d: Camera2d {},
+        Camera2d {},
+        Camera {
+            is_active: true,
+            order: 1,
+            viewport: Some(viewport),
             ..default()
         },
+        Transform::from_translation(Vec3::ZERO.with_z(100.0)),
+        projection,
         RenderLayers::layer(RENDER_LAYER_ZOOM),
         Name::new("Zoom Camera"),
         Zoom,
@@ -85,18 +89,15 @@ fn setup(
         window.resolution.physical_height(),
     );
     commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                is_active: true,
-                order: 2,
-                viewport: Some(viewport),
-                ..default()
-            },
-            transform: Transform::from_translation(Vec3::ZERO.with_z(200.0)),
-            projection,
-            camera_2d: Camera2d {},
+        Camera2d {},
+        Camera {
+            is_active: true,
+            order: 2,
+            viewport: Some(viewport),
             ..default()
         },
+        Transform::from_translation(Vec3::ZERO.with_z(200.0)),
+        projection,
         RenderLayers::layer(RENDER_LAYER_MINIMAP),
         Name::new("Minimap Camera"),
     ));
@@ -124,18 +125,17 @@ fn new_sprite(commands: &mut Commands, texture_handle: &Handle<Image>, x: f32, y
     let scale = 800f32 * 2f32 / 512f32;
 
     commands.spawn((
-        SpriteBundle {
-            sprite: Sprite { ..default() },
-            texture: texture_handle.clone(),
-            visibility: Visibility::Visible,
-            transform: Transform::from_scale(Vec3 {
-                x: scale,
-                y: scale,
-                z: 1f32,
-            })
-                .with_translation(Vec3::new(x, y, -280.0)),
+        Sprite {
+            image: texture_handle.clone(),
             ..default()
         },
+        Visibility::Visible,
+        Transform::from_scale(Vec3 {
+            x: scale,
+            y: scale,
+            z: 1f32,
+        })
+        .with_translation(Vec3::new(x, y, -280.0)),
         RenderLayers::from_layers(&[RENDER_LAYER_ZOOM, RENDER_LAYER_MINIMAP]),
     ));
 }
@@ -144,7 +144,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                resolution: WindowResolution::new(2560.0, 1440.0),
+                resolution: WindowResolution::new(800.0, 600.0),
+                // resolution: WindowResolution::new(2560.0, 1440.0),
                 present_mode: PresentMode::AutoVsync,
                 mode: WindowMode::Windowed,
                 resizable: true,
@@ -183,11 +184,7 @@ fn control(input: Res<ButtonInput<KeyCode>>, mut q_transform: Query<&mut Transfo
                 );
             }
             KeyCode::KeyB => {
-                *transform = Transform::from_translation(Vec3::new(
-                    13120.0,
-                    2020.0,
-                    100.0,
-                ));
+                *transform = Transform::from_translation(Vec3::new(13120.0, 2020.0, 100.0));
             }
             _ => (),
         }
